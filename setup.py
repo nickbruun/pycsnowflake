@@ -7,7 +7,8 @@ setup(
     ext_modules=[
         Extension(
             'snowflake',
-            ['src/module.c', 'src/schema.c', 'src/generator.c']
+            ['src/module.c', 'src/schema.c', 'src/generator.c'],
+            extra_compile_args=['-std=c99']
         ),
     ],
     tests_require=[
