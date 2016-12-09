@@ -10,8 +10,5 @@ setup(
             ['src/module.c', 'src/schema.c', 'src/generator.c'],
             extra_compile_args=['-std=c99']
         ),
-    ],
-    tests_require=[
-        'nose>=1.3.7,<2.0.0'
     ]
 )
