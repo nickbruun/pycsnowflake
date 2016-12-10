@@ -59,7 +59,7 @@ typedef struct {
 } Generator;
 
 
-static void Generator_dealloc(Generator* self)
+static void Generator_dealloc(Generator *self)
 {
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
@@ -188,7 +188,12 @@ static PyGetSetDef Generator_getseters[] = {
 };
 
 
-static PyObject *Generator_generate(Generator* self)
+/**
+ * Generate one ID synchronously.
+ *
+ * @returns the generated ID.
+ */
+static PY_LONG_LONG Generator_generate_one_sync(Generator *self)
 {
     while (1) {
         /* Get the current timestamp and handle changes. */
@@ -211,7 +216,7 @@ static PyObject *Generator_generate(Generator* self)
 
         PY_LONG_LONG sequence = (++self->last_sequence_number);
 
-        return PyLong_FromLongLong(
+        return (
             (timestamp << self->timestamp_offset) |
             self->identity_id_part |
             sequence
@@ -220,9 +225,59 @@ static PyObject *Generator_generate(Generator* self)
 }
 
 
+static PyObject *Generator_generate(Generator *self)
+{
+    return PyLong_FromLongLong(Generator_generate_one_sync(self));
+}
+
+
+static PyObject *Generator_generate_many(Generator *self, PyObject *args, PyObject *kwds)
+{
+    /* Parse arguments. */
+    static char *kwlist[] = {
+        "count",
+        NULL
+    };
+    Py_ssize_t count = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args,
+                                     kwds,
+                                     "n",
+                                     kwlist,
+                                     &count)) {
+        return NULL;
+    }
+
+    if (count < 0) {
+        PyErr_Format(PyExc_ValueError, "The number of IDs to generate cannot be negative: %d", count);
+        return NULL;
+    }
+
+    /* Allocate the result list. */
+    PyObject *result = PyList_New(count);
+
+    if (!result) {
+        return NULL;
+    }
+
+    /* Generate IDs. */
+    for (Py_ssize_t i = 0; i < count; ++i) {
+        PyList_SetItem(result, i, PyLong_FromLongLong(Generator_generate_one_sync(self)));
+    }
+
+    return result;
+}
+
+
 static PyMethodDef Generator_methods[] = {
-    {"generate", (PyCFunction)Generator_generate, METH_NOARGS,
+    {"generate",
+     (PyCFunction)Generator_generate,
+     METH_NOARGS,
      "Generate an ID"},
+    {"generate_many",
+     (PyCFunction)Generator_generate_many,
+     METH_VARARGS | METH_KEYWORDS,
+     "Generate multiple IDs"},
     {NULL},
 };
 
