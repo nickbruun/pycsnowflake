@@ -1,5 +1,7 @@
 PY_DIRS := tests
 
+PYTHON_BIN ?= python
+
 all: install test stylecheck
 
 build:
@@ -21,4 +23,7 @@ clean:
 docs:
 	cd docs; make html
 
-.PHONY: all test stylecheck clean
+dist:
+	@${PYTHON_BIN} setup.py sdist
+
+.PHONY: all test stylecheck clean dist
