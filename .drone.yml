@@ -1,0 +1,8 @@
+pipeline:
+  build:
+    image: python:3.6
+    commands:
+      - make install
+      - pip install -r test_requirements.txt
+      - make test
+      - make stylecheck
